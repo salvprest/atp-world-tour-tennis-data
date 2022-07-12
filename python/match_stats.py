@@ -7,6 +7,7 @@ import time
 import numbers
 from requests_html import HTMLSession
 from pyppeteer.errors import BrowserError, TimeoutError, NetworkError
+import os.path
 
 def array2csv(array, filename):
     with open(filename, "w+") as my_csv:
@@ -405,6 +406,16 @@ print('')
 print('Index    Tourney slug           Matches')
 print('-----    ------------           -------')
 
+# load data if any
+old_csv_data = []
+filename = "match_stats_" + year + "_" + start_index + ".csv"
+old_file_exist = False
+if os.path.isfile(filename) :
+    old_file_exist = True
+    with open(filename,'r') as csv_f:
+        csv_f_iter = csv.reader(csv_f,delimiter = ',', quotechar = '"')
+        old_csv_data = [old_csv_data for old_csv_data in csv_f_iter]
+
 # Iterate through each tournament
 match_stats_data_scrape = []
 for i in range(int(start_index), int(end_index)):
@@ -515,13 +526,24 @@ for i in range(int(start_index), int(end_index)):
                     match_urls.append(match_stats_url_suffix)
                     match_stats_url = url_prefix + match_stats_url_suffix
 
+                    # use data saved
+                    scraped_stats = []
+                    if old_file_exist :
+                        # no - 1 in the index because we have to insert this loop data in match_stats_data_scrape array
+                        row_index = len(match_stats_data_scrape)
+                        if len(match_stats_data_scrape) < len(old_csv_data) :
+                            if old_csv_data[row_index][4] != '' :
+                                if old_csv_data[row_index][2] == match_stats_url_suffix :
+                                    scraped_stats = old_csv_data[row_index]
+
                     # # # # # # # # # # # # # # # # # # #
                     # Use scrape_match_stats() function #
                     # # # # # # # # # # # # # # # # # # #
-                    scraped_stats = scrape_match_stats(match_stats_url)
+                    if len(scraped_stats) == 0:
+                        scraped_stats = scrape_match_stats(match_stats_url)
                     
-                    # Check for walkovers because it overcounts matches with match stats
-                    if scraped_stats[4] == '': match_counter -= 1
+                        # Check for walkovers because it overcounts matches with match stats
+                        if scraped_stats[4] == '': match_counter -= 1
             
                     # Store scraped stats
                     match_stats_data_scrape += [scraped_stats]           
