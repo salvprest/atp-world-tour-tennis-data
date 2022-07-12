@@ -17,7 +17,6 @@ This repository contains Python scripts that scrape tennis data from the <a href
 - C. [Scraping match stats for each match](#part-c)
   - C1. [The `match_stats.py` script](#part-c1)
   - C2. [Example usage](#part-c2)
-  - C3. [Asynchronous scraping issues](#part-c3)
 
 <div id="part-a"></div>
 
