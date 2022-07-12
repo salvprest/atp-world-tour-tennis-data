@@ -3,6 +3,9 @@ from lxml import html
 import requests
 import re
 import csv
+import time
+from requests_html import HTMLSession
+from pyppeteer.errors import BrowserError, TimeoutError, NetworkError
 
 # # # # # # # # #
 #               #
@@ -16,9 +19,21 @@ def array2csv(array, filename):
         csvWriter.writerows(array)
 
 def html_parse_tree(url):
-    page = requests.get(url)
-    tree = html.fromstring(page.content)
-    return tree
+    try:
+        session = HTMLSession(browser_args=["--no-sandbox", '--user-agent=Mozilla/5.0 (Windows NT 5.1; rv:7.0.1) Gecko/20100101 Firefox/7.0.1'])
+        response = session.get(url)
+        response.html.render(retries = 1, wait = 1.0, timeout = 20)
+        tree = html.fromstring(response.content)
+
+        response.close()  # close response
+        session.close()  # close session
+
+        #time.sleep(5) # sleep to reduce request number
+        return tree
+    except (BrowserError, TimeoutError, NetworkError) :
+        print ("error: BrowserError, TimeoutError or NetworkError")
+        time.sleep(5) # sleep then retry
+        return html_parse_tree(url)
 
 def xpath_parse(tree, xpath):
     result = tree.xpath(xpath)
